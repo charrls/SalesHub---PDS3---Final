@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.content.Context
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 
 class ClientViewModel(
@@ -114,5 +116,14 @@ class ClientViewModel(
             globalMaxTerm.value = maxTerm
         }
     }
+
+    fun getClientsOverLimit(): Flow<List<Client>> {
+        return clientListState.map { clients ->
+            clients.filter { client ->
+                client.balance!! > (client.maxAmount ?: Double.MAX_VALUE)
+            }
+        }
+    }
+
 }
 

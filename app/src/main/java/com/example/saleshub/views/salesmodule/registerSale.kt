@@ -1,6 +1,7 @@
 package com.example.saleshub.views.salesmodule
 
 import android.app.Activity
+import androidx.compose.foundation.BorderStroke
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -197,7 +198,7 @@ fun viewProducts(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(0.5.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
+                .border(0.5.dp, color = colorResource(id = R.color.topProduct), shape = RoundedCornerShape(8.dp)),
             color = Color.White,
             shape = RoundedCornerShape(8.dp)
         ) {
@@ -218,11 +219,16 @@ fun viewProducts(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White, shape = RoundedCornerShape(8.dp)) // Color con esquinas redondeadas
-                        .clip(RoundedCornerShape(8.dp)) // Asegura que el contenido también respete las esquinas redondeadas
+                        .background(
+                            Color.White,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .border(0.5.dp, color = colorResource(id = R.color.topProduct), shape = RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .padding(8.dp)
                         .heightIn(140.dp, max = 140.dp)
-                ){
+
+                    ){
                     items(productCount.keys.toList()) { productName ->
                         val product = selectedProducts.first { it.name == productName }
                         val count = productCount[productName]?.size ?: 0

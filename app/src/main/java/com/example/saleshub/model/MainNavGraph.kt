@@ -33,7 +33,7 @@ fun MainNavGraph(navController: NavHostController, productViewModel: ProductView
 
         //Home
         composable(Screen.Home.route) {
-            HomeScreen(navController)
+            HomeScreen(navController, salesViewModel, productViewModel, clientViewModel)
         }
 
         //Modulos

@@ -32,6 +32,26 @@ class SalesViewModel(private val repository: SalesRepository, private val client
         }
     }
 
+    private val _todaySalesSummary = MutableStateFlow(Pair(0.0, 0)) // Total y número de ventas
+    val todaySalesSummary: StateFlow<Pair<Double, Int>> = _todaySalesSummary
+
+    init {
+        calculateTodaySalesSummary()
+    }
+
+    // Cálculo del resumen de ventas de hoy
+    private fun calculateTodaySalesSummary() {
+        viewModelScope.launch {
+            salesListState.collect { sales ->
+                val todaySales = sales.filter { isSameDay(it.fecha) }
+                val totalAmount = todaySales.sumOf { it.precioTotal }
+                val totalOrders = todaySales.size
+                _todaySalesSummary.value = Pair(totalAmount, totalOrders)
+            }
+        }
+    }
+
+
     fun registerSale(
         productos: List<String>,
         cantidades: List<Int>,

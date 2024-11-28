@@ -10,8 +10,11 @@ import com.example.saleshub.repository.ProductRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class ProductViewModel(private val repository: ProductRepository) : ViewModel() {
 
@@ -109,6 +112,18 @@ class ProductViewModel(private val repository: ProductRepository) : ViewModel() 
         productType = ""
     }
 
+    fun getOutOfStockProducts(): StateFlow<List<Product>> {
+        val outOfStockProducts = productListState.map { products ->
+            products.filter { it.stock == 0 && it.type == "Adicional" }
+        }
+        return outOfStockProducts.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
     }
+
+
+}
 
 
