@@ -60,12 +60,18 @@ fun ViewInventoryScreenContent(
         else -> productList // Por defecto, muestra todos los productos
     }
 
+    // Lógica para mostrar los mensajes adecuados
+    val noProductsMessage = when {
+        productList.isEmpty() -> "No hay productos registrados"
+        selectedFilter == "Adicional" && filteredProducts.isEmpty() -> "No hay productos Adicionales registrados"
+        selectedFilter == "Alimento" && filteredProducts.isEmpty() -> "No hay productos Alimentos registrados"
+        else -> null
+    }
+
     Scaffold(
-        modifier = Modifier.systemBarsPadding()
-        ,
+        modifier = Modifier.systemBarsPadding(),
         topBar = {
             HeaderViewInventoryContent(navController)
-
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -105,25 +111,44 @@ fun ViewInventoryScreenContent(
                         .padding(bottom = 90.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    ViewInventoryContent(
-                        productList = filteredProducts,
-                        onDelete = { productViewModel.deleteProduct(it.id) },
-                        onEdit = { product ->
-                            navController.navigate("edit_product/${product.id}")
-                        },
-                        onAddStock = { product ->
-                            navController.navigate("update_stock/${product.id}")
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 1.dp)
-                    )
+                    // Si hay mensaje de no productos, mostrarlo
+                    if (noProductsMessage != null) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = noProductsMessage,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        // Mostrar la lista de productos
+                        ViewInventoryContent(
+                            productList = filteredProducts,
+                            onDelete = { productViewModel.deleteProduct(it.id) },
+                            onEdit = { product ->
+                                navController.navigate("edit_product/${product.id}")
+                            },
+                            onAddStock = { product ->
+                                navController.navigate("update_stock/${product.id}")
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 1.dp)
+                        )
+                    }
                 }
                 pieBotones(navController)
             }
         }
     )
 }
+
 
 @Composable
 fun ordenarProductos(selectedFilter: String, onFilterSelected: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -197,21 +222,7 @@ fun ViewInventoryContent(
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
-    if (productList.isEmpty()) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp, 12.dp, 22.dp, 12.dp)
-        ) {
-            Text(
-                text = "No hay productos registrados",
-                fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-        }
-    } else {
+
         LazyColumn(
             modifier = modifier
         ) {
@@ -261,7 +272,7 @@ fun ViewInventoryContent(
                 }
             )
         }
-    }
+
 }
 
 

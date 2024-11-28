@@ -100,11 +100,16 @@ fun SalesHistoryScreen(navController: NavController, salesViewModel: SalesViewMo
         TotalSales(filteredSales, modifier = Modifier.padding(16.dp))
     }
 }
+
+
 @Composable
 fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewModel: SalesViewModel, productViewModel: ProductViewModel) {
     var showDeleteDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo
     var selectedSaleId by remember { mutableStateOf<Int?>(null) } // ID de la venta seleccionada
     var selectedSaleDate by remember { mutableStateOf<String>("") } // Fecha de la venta seleccionada
+
+    // Obtener todos los clientes de una vez al inicio
+    val clients by clientViewModel.clientListState.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -114,16 +119,9 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
             val productCount = sale.productos.groupBy { it }
             val maxVisibleProducts = 2
             var isExpanded by remember { mutableStateOf(false) }
-            var clientState by remember { mutableStateOf<Client?>(null) }
 
-            LaunchedEffect(sale.idCliente) {
-                if (sale.idCliente != null) {
-                    clientViewModel.getClientById(sale.idCliente)
-                    clientViewModel.selectedClientState.collect { client ->
-                        clientState = client
-                    }
-                }
-            }
+            // Buscar el cliente correspondiente al id
+            val client = clients.find { it.id == sale.idCliente }
 
             Card(
                 modifier = Modifier
@@ -132,7 +130,9 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
                 border = BorderStroke(0.5.dp, Color.LightGray),
                 colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.light_gris))
             ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Column(modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -157,14 +157,14 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Eliminar venta",
                                     tint = Color.Red,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                     }
 
                     // Mostrar productos en la venta
-                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                    Column(modifier = Modifier.padding(top = 0.dp)) {
                         val productsToShow = if (isExpanded) productCount.keys else productCount.keys.take(maxVisibleProducts)
 
                         productsToShow.forEach { productName ->
@@ -176,7 +176,7 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
+                                    .padding(vertical = 0.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
@@ -194,8 +194,6 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
                             Divider()
                         }
 
-
-
                         if (productCount.keys.size > maxVisibleProducts) {
                             Text(
                                 text = if (isExpanded) "Ver menos" else "Ver más",
@@ -205,14 +203,18 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
                                     .clickable { isExpanded = !isExpanded }
                                     .padding(top = 4.dp)
                             )
+                        } else {
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
+
+                    // Mostrar cliente y total de la venta
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Cliente: ${clientState?.name ?: "N/A"}",
+                            text = "Cliente: ${client?.name ?: "N/A"}",
                             fontSize = 14.sp
                         )
                         Text(
@@ -241,6 +243,7 @@ fun ViewHistory(sales: List<Sale>, clientViewModel: ClientViewModel, salesViewMo
         )
     }
 }
+
 
 
 @Composable

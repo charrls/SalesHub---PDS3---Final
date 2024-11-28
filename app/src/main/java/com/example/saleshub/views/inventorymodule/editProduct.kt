@@ -320,7 +320,8 @@ fun EditProductForm(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 isError = stockMinError != null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
             )
             stockMinError?.let {
                 Text(
@@ -340,7 +341,8 @@ fun EditProductForm(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             isError = priceError != null,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true
         )
         priceError?.let {
             Text(

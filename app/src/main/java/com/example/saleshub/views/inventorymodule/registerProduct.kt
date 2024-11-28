@@ -256,7 +256,8 @@ fun ProductForm(
                         modifier = Modifier.width(150.dp),
                         isError = stockError,
                         shape = RoundedCornerShape(8.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
                     )
                     if (productStock.trim().isEmpty()) {
                         Text(
@@ -284,7 +285,8 @@ fun ProductForm(
                         modifier = Modifier.width(150.dp),
                         isError = stockMinError,
                         shape = RoundedCornerShape(8.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
                     )
                     if (productStockMin.trim().isEmpty()) {
                         Text(
@@ -315,7 +317,8 @@ fun ProductForm(
             modifier = Modifier.width(150.dp),
             isError = priceError,
             shape = RoundedCornerShape(8.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true
         )
         if (productPrice.trim().isEmpty()) {
             Text(

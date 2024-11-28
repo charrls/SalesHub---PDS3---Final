@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                 val salesRepository = SalesRepository(salesDao)
                 val salesViewModel: SalesViewModel = ViewModelProvider(
                     this,
-                    SalesViewModelFactory(salesRepository, clientViewModel)
+                    SalesViewModelFactory(salesRepository, clientViewModel, productViewModel)
                 )[SalesViewModel::class.java]
 
                 Log.d("MainActivity", "SalesViewModel initialized: $salesViewModel")

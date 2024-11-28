@@ -102,6 +102,12 @@ class ClientViewModel(
         viewModelScope.launch { repository.deleteClient(clientId) }
     }
 
+
+
+    fun getMaxTerm(): Int? = globalMaxTerm.value
+    fun getMaxAmount(): Double? = globalMaxAmount.value
+
+
     // Actualiza y guarda los valores de monto y plazo máximo
     fun updateAllMaxAmountAndTerm(maxAmount: Double, maxTerm: Int) {
         viewModelScope.launch {

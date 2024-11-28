@@ -187,7 +187,7 @@ fun Content(
                                 descripcion = product.description,
                                 stock = product.stock,
                                 onClick = {
-                                    navController.navigate(Screen.viewInventoryContent.route)
+                                    navController.navigate("update_stock/${product.id}")
                                 },
                                 modifier = Modifier
                                     .fillParentMaxWidth(1f / 3f) // Ocupa el 33% del ancho del LazyRow
@@ -301,7 +301,7 @@ fun Content(
                                 telefono = client.phone,
                                 balance = client.balance ?: 0.0,
                                 onClick = {
-                                    navController.navigate(Screen.AccountsModule.route)
+                                    navController.navigate("add_payment/${client.id}")
                                 },
                                 modifier = Modifier
                                     .fillParentMaxWidth(1f / 3f) // Ocupa el 33% del ancho del LazyRow
@@ -369,7 +369,7 @@ fun ClientCardInfo(
                 .fillMaxSize()
                 .padding(8.dp),
 
-            horizontalAlignment = Alignment.Start,
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround,
         ) {
             Text(
@@ -434,7 +434,7 @@ fun ProductCardInfo(
                 .fillMaxSize()
                 .padding(8.dp),
 
-            horizontalAlignment = Alignment.Start,
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround,
         ) {
             Text(
@@ -456,7 +456,7 @@ fun ProductCardInfo(
             Row (
                 modifier = Modifier
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text ="Stock: ",

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class SalesViewModel(private val repository: SalesRepository, private val clientViewModel: ClientViewModel // Agregado
+class SalesViewModel(private val repository: SalesRepository, private val clientViewModel: ClientViewModel, private val productViewModel: ProductViewModel // Agregado
 ) : ViewModel() {
 
     private val _salesListState = MutableStateFlow<List<Sale>>(emptyList())
@@ -63,7 +63,7 @@ class SalesViewModel(private val repository: SalesRepository, private val client
 
         val nuevaVenta = Sale(
             productos = productos,
-            cantidades = cantidades,
+            cantidades = cantidades, // Este campo queda vacío, ya que las cantidades se derivan del conteo
             precioTotal = precioTotal,
             fecha = System.currentTimeMillis(),
             idCliente = idCliente,
@@ -71,14 +71,37 @@ class SalesViewModel(private val repository: SalesRepository, private val client
         )
 
         viewModelScope.launch {
-            repository.insertSale(nuevaVenta)
+            try {
+                repository.insertSale(nuevaVenta)
 
-            // Si la venta es fiada, actualizar el balance del cliente
-            if (esFiadaFinal && idCliente != null) {
-                updateClientBalance(idCliente, precioTotal)
+                // Actualizar el stock de los productos adicionales
+                updateAdditionalProductsStock(productos)
+
+                // Si la venta es fiada, actualizar el balance del cliente
+                if (esFiadaFinal && idCliente != null) {
+                    updateClientBalance(idCliente, precioTotal)
+                }
+            } catch (e: Exception) {
+                Log.e("SalesViewModel", "Error al registrar la venta: ${e.message}")
             }
         }
     }
+
+    private suspend fun updateAdditionalProductsStock(productosVendidos: List<String>) {
+        val allProducts = productViewModel.productListState.value
+
+        // Agrupar los productos vendidos por su nombre y contar las ocurrencias
+        val productosContados = productosVendidos.groupingBy { it }.eachCount()
+
+        productosContados.forEach { (productName, cantidadVendida) ->
+            val product = allProducts.find { it.name == productName && it.type == "Adicional" }
+            if (product != null) {
+                val newStock = (product.stock - cantidadVendida).coerceAtLeast(0)
+                productViewModel.updateStock(product.id, newStock)
+            }
+        }
+    }
+
 
     private suspend fun updateClientBalance(clientId: Int, amount: Double) {
         // Llama al método de ClientViewModel para actualizar el balance

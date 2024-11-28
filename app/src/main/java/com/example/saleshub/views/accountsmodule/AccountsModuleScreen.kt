@@ -88,6 +88,14 @@ fun ViewAccountsScreenContent(
         else -> clientList // Por defecto, muestra todos los clientes
     }
 
+    // Lógica para mostrar los mensajes adecuados
+    val noClientsMessage = when {
+        clientList.isEmpty() -> "No hay clientes registrados"
+        selectedFilter == "Con deuda" && filteredClients.isEmpty() -> "No hay clientes con deuda"
+        selectedFilter == "Sin deuda" && filteredClients.isEmpty() -> "No hay clientes sin deuda"
+        else -> null
+    }
+
     Scaffold(
         modifier = Modifier.systemBarsPadding(),
         topBar = {
@@ -120,7 +128,7 @@ fun ViewAccountsScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 iconAccounts()
-                ordenarClientes(navController,selectedFilter, { filter ->
+                ordenarClientes(navController, selectedFilter, { filter ->
                     selectedFilter = filter // Actualiza el filtro seleccionado
                 })
                 Surface(
@@ -131,24 +139,109 @@ fun ViewAccountsScreenContent(
                         .padding(bottom = 90.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    ViewAccountsContent(
-                        clientList = filteredClients,
-                        onDelete = { clientViewModel.deleteClient(it.id) },
-                        onEdit = { client ->
-                            navController.navigate("edit_client/${client.id}")
-                        },
-                        onAddPayment = { client ->
-                            navController.navigate("add_payment/${client.id}")
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 1.dp)
-                    )
+                    // Si hay mensaje de no clientes, mostrarlo
+                    if (noClientsMessage != null) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = noClientsMessage,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        // Mostrar la lista de clientes
+                        ViewAccountsContent(
+                            clientList = filteredClients,
+                            onDelete = { clientViewModel.deleteClient(it.id) },
+                            onEdit = { client ->
+                                navController.navigate("edit_client/${client.id}")
+                            },
+                            onAddPayment = { client ->
+                                navController.navigate("add_payment/${client.id}")
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 1.dp)
+                        )
+                    }
                 }
                 pieBotones(navController)
             }
         }
     )
+}
+
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun ViewAccountsContent(
+    clientList: List<Client>,
+    onDelete: (Client) -> Unit,
+    onEdit: (Client) -> Unit,
+    onAddPayment: (Client) -> Unit,
+    modifier: Modifier = Modifier
+) {
+
+    var clientToDelete by remember { mutableStateOf<Client?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+
+
+        LazyColumn(
+            modifier = modifier
+        ) {
+            items(clientList, key = { it.id }) { client ->
+                val dismissState = rememberDismissState(
+                    confirmStateChange = {
+                        when (it) {
+                            DismissValue.DismissedToStart -> {
+                                clientToDelete = client
+                                showDialog = true
+                            }
+                            DismissValue.DismissedToEnd -> {
+                                onEdit(client)
+                            }
+                            else -> false
+                        }
+                        false
+                    }
+                )
+
+                SwipeToDismiss(
+                    state = dismissState,
+                    directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
+                    background = { SwipeBackgroundC(dismissState.dismissDirection) },
+                    dismissContent = {
+                        ClientItem(
+                            client = client,
+                            onAddPaymentClick = { onAddPayment(client) }
+                        )
+                    }
+                )
+            }
+        }
+
+        if (showDialog && clientToDelete != null) {
+            ConfirmDeleteDialog(
+                clientName = clientToDelete!!.name,
+                clientDesc = clientToDelete!!.phone,
+                onConfirmDelete = {
+                    onDelete(clientToDelete!!)
+                    clientToDelete = null
+                    showDialog = false
+                },
+                onDismiss = {
+                    showDialog = false
+                }
+            )
+        }
+
 }
 
 @Composable
@@ -210,13 +303,13 @@ fun ordenarClientes(navController: NavController,selectedFilter: String, onFilte
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-        Row {
-            FilterButton("Todo", selectedFilter, onFilterSelected)
-            Spacer(modifier = Modifier.width(8.dp))
-            FilterButton("Con deuda", selectedFilter, onFilterSelected)
-            Spacer(modifier = Modifier.width(8.dp))
-            FilterButton("Sin deuda", selectedFilter, onFilterSelected)
-        }
+            Row {
+                FilterButton("Todo", selectedFilter, onFilterSelected)
+                Spacer(modifier = Modifier.width(8.dp))
+                FilterButton("Con deuda", selectedFilter, onFilterSelected)
+                Spacer(modifier = Modifier.width(8.dp))
+                FilterButton("Sin deuda", selectedFilter, onFilterSelected)
+            }
             Row {
                 IconButton(
                     onClick = { navController.navigate(Screen.Deadlines.route) },
@@ -230,87 +323,9 @@ fun ordenarClientes(navController: NavController,selectedFilter: String, onFilte
                     )
                 }
             }
-    }}
+        }}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun ViewAccountsContent(
-    clientList: List<Client>,
-    onDelete: (Client) -> Unit,
-    onEdit: (Client) -> Unit,
-    onAddPayment: (Client) -> Unit,
-    modifier: Modifier = Modifier
-) {
-
-    var clientToDelete by remember { mutableStateOf<Client?>(null) }
-    var showDialog by remember { mutableStateOf(false) }
-
-    if (clientList.isEmpty()) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp, 12.dp, 22.dp, 12.dp)
-        ) {
-            Text(
-                text = "No hay clientes registrados",
-                fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-        }
-    } else {
-        LazyColumn(
-            modifier = modifier
-        ) {
-            items(clientList, key = { it.id }) { client ->
-                val dismissState = rememberDismissState(
-                    confirmStateChange = {
-                        when (it) {
-                            DismissValue.DismissedToStart -> {
-                                clientToDelete = client
-                                showDialog = true
-                            }
-                            DismissValue.DismissedToEnd -> {
-                                onEdit(client)
-                            }
-                            else -> false
-                        }
-                        false
-                    }
-                )
-
-                SwipeToDismiss(
-                    state = dismissState,
-                    directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
-                    background = { SwipeBackgroundC(dismissState.dismissDirection) },
-                    dismissContent = {
-                        ClientItem(
-                            client = client,
-                            onAddPaymentClick = { onAddPayment(client) }
-                        )
-                    }
-                )
-            }
-        }
-
-        if (showDialog && clientToDelete != null) {
-            ConfirmDeleteDialog(
-                clientName = clientToDelete!!.name,
-                clientDesc = clientToDelete!!.phone,
-                onConfirmDelete = {
-                    onDelete(clientToDelete!!)
-                    clientToDelete = null
-                    showDialog = false
-                },
-                onDismiss = {
-                    showDialog = false
-                }
-            )
-        }
-    }
-}
 
 @Composable
 fun SwipeBackgroundC(dismissDirection: DismissDirection?) {

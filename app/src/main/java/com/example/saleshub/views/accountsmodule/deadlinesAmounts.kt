@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,12 +21,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,9 +48,15 @@ import androidx.navigation.compose.rememberNavController
 import com.example.saleshub.R
 import com.example.saleshub.viewmodel.ClientViewModel
 
-
 @Composable
-fun DeadlinesScreen(navController: NavController, clientViewModel: ClientViewModel, modifier: Modifier = Modifier) {
+fun DeadlinesScreen(
+    navController: NavController,
+    clientViewModel: ClientViewModel,
+    modifier: Modifier = Modifier
+) {
+    val globalMaxAmount by clientViewModel.globalMaxAmount.collectAsState()
+    val globalMaxTerm by clientViewModel.globalMaxTerm.collectAsState()
+
     var maxTerm by remember { mutableStateOf("") }
     var maxAmount by remember { mutableStateOf("") }
     var isMaxTermValid by remember { mutableStateOf(true) }
@@ -54,51 +64,69 @@ fun DeadlinesScreen(navController: NavController, clientViewModel: ClientViewMod
     var showMaxTermError by remember { mutableStateOf(false) }
     var showMaxAmountError by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            HeaderDeadlines(navController, Modifier.fillMaxWidth())
-            iconDeadlines()
-            DeadlinesForm(
+    // Cargar valores iniciales cuando estén disponibles
+    LaunchedEffect(globalMaxAmount, globalMaxTerm) {
+        globalMaxTerm?.let { maxTerm = it.toString() }
+        globalMaxAmount?.let { maxAmount = it.toString() }
+    }
+
+    // Mostrar un indicador de carga mientras los valores iniciales son nulos
+    if (globalMaxAmount == null || globalMaxTerm == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+                .background(Color.White),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                HeaderDeadlines(navController, Modifier.fillMaxWidth())
+                iconDeadlines()
+                DeadlinesForm(
+                    maxTerm = maxTerm,
+                    onMaxTermChange = {
+                        maxTerm = it
+                        isMaxTermValid = it.isNotEmpty() && it.toIntOrNull() != null && it.toInt() > 0
+                        showMaxTermError = it.isEmpty() || !isMaxTermValid
+                    },
+                    maxAmount = maxAmount,
+                    onMaxAmountChange = {
+                        maxAmount = it
+                        isMaxAmountValid = it.isNotEmpty() && it.toDoubleOrNull() != null && it.toDouble() > 0
+                        showMaxAmountError = it.isEmpty() || !isMaxAmountValid
+                    },
+                    showMaxTermError = showMaxTermError,
+                    showMaxAmountError = showMaxAmountError
+                )
+            }
+            FootDeadlinesBottons(
+                onCancel = { navController.popBackStack() },
+                onRegister = {
+                    if (isMaxTermValid && isMaxAmountValid) {
+                        val maxTermValue = maxTerm.toIntOrNull()
+                        val maxAmountValue = maxAmount.toDoubleOrNull()
+                        if (maxTermValue != null && maxAmountValue != null) {
+                            clientViewModel.updateAllMaxAmountAndTerm(maxAmountValue, maxTermValue)
+                            navController.popBackStack()
+                        }
+                    }
+                },
                 maxTerm = maxTerm,
-                onMaxTermChange = {
-                    maxTerm = it
-                    isMaxTermValid = it.isNotEmpty() && it.toIntOrNull() != null && it.toInt() > 0
-                    showMaxTermError = it.isEmpty() || !isMaxTermValid
-                },
-                maxAmount = maxAmount,
-                onMaxAmountChange = {
-                    maxAmount = it
-                    isMaxAmountValid = it.isNotEmpty() && it.toDoubleOrNull() != null && it.toDouble() > 0
-                    showMaxAmountError = it.isEmpty() || !isMaxAmountValid
-                },
-                showMaxTermError = showMaxTermError,
-                showMaxAmountError = showMaxAmountError
+                maxAmount = maxAmount
             )
         }
-        FootDeadlinesBottons(
-            onCancel = { navController.popBackStack() },
-            onRegister = {
-                if (isMaxTermValid && isMaxAmountValid) {
-                    val maxTermValue = maxTerm.toIntOrNull()
-                    val maxAmountValue = maxAmount.toDoubleOrNull()
-                    if (maxTermValue != null && maxAmountValue != null) {
-                        clientViewModel.updateAllMaxAmountAndTerm(maxAmountValue, maxTermValue)
-                        navController.popBackStack() // Vuelve a la pantalla anterior
-                    }
-                }
-            },
-            maxTerm = maxTerm,
-            maxAmount = maxAmount
-        )
     }
 }
+
+
 
 @Composable
 fun FootDeadlinesBottons(
